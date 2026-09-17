@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "BESLENCE AI",
+    "slug": "beslence-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "beslence",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Yemek fotoğraflarını analiz etmek için",
+        "NSPhotoLibraryUsageDescription": "Galeriden yemek fotoğrafı eklemek için",
+        "NSMicrophoneUsageDescription": "Sesle kayıt eklemek için"
+      },
+      "bundleIdentifier": "com.emergent.aifoodlogger.mu8e6i"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1D9E75"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "POST_NOTIFICATIONS"
+      ],
+      "package": "com.emergent.aifoodlogger.mu8e6i"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-image.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#0B2620"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BESLENCE AI yemek fotoğraflarını analiz etmek için galeriye erişir.",
+          "cameraPermission": "BESLENCE AI yemek fotoğraflarını analiz etmek için kameraya erişir."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "BESLENCE AI sesle kayıt eklemek için mikrofonunuza erişir."
+        }
+      ],
+      "expo-web-browser",
+      "expo-secure-store",
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "summary": "P0 timezone fix + new PATCH/report endpoints VERIFIED. All 10 pytest tests pass on first run against https://ai-food-logger-2.preview.emergentagent.com (session demo_session_grid_001 / user_demo_grid01). (1) TIMEZONE FIX confirmed: (1a) +03:00 ISO input '2026-07-01T19:15:00+03:00' → entry.time=='19:15', entry.date=='2026-07-01'. (1b) UTC 'Z' input '2026-07-01T16:15:00Z' correctly CONVERTED to Istanbul → entry.time=='19:15' (not '16:15' — proves the UTC leak is gone). (1c) 'yarın 20:00 pizza yedim' + user_local_time 14:30+03:00 → entry.time=='14:30' & entry.date=='2026-07-01' (assistant no longer honors historical/future times in the message). (2) PATCH /entries/{id}/time: valid 08:30 → 200 {ok:true} and GET reflects the change; invalid '25:99' → 400. (3) PATCH /entries/{id}/amount: food scaled 2× porsiyon → calories_min/max ratio ∈ [1.8, 2.2]; water amount=330 ml → water_ml==330 in GET; nonexistent id → 404. (4) GET /report/daily?date=2026-06-30: totals object has all 10 required numeric keys (calories, calories_delta, protein_g, carbohydrate_g, fat_g, fiber_g, water_ml, water_target_ml, activity_minutes, entry_count). warnings list contains 'water' warning as expected (seed ~800 ml vs ~2400 ml target); each warning has {id,title,text}. meals list matches seed's 10 entries with all required fields (id,time,title,entry_type,meal_type,calories,water_ml,duration_minutes). disclaimer tail = 'Kişisel öneriler için diyetisyen desteği gerekir.'. food_groups_hit is a list of strings. (5) REGRESSION: clarification round-trip still works — 'yemek yedim' returns needs_clarification:true with questions[] & draft; POSTing back with draft + clarification_answers returns ok:true, needs_clarification:false and a persisted entry with a valid meal_type. No frontend testing performed (backend-only per request).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_timezone_and_new_endpoints.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "test_results_detail": {
+    "passed": [
+      "TestTimezoneFix::test_1a_istanbul_offset_preserved (+03:00 input → 19:15 preserved)",
+      "TestTimezoneFix::test_1b_utc_converted_to_istanbul (Z input → converted to 19:15, NOT 16:15)",
+      "TestTimezoneFix::test_1c_assistant_does_not_use_message_time (message '20:00 pizza' + now=14:30 → time=14:30, date=today)",
+      "TestPatchTime::test_patch_time_valid_and_persisted (08:30 → 200 + verified via GET)",
+      "TestPatchTime::test_patch_time_invalid_format_returns_400 ('25:99' → HTTP 400)",
+      "TestPatchAmount::test_scale_food_portion (2× porsiyon → calories ratio ~2×)",
+      "TestPatchAmount::test_scale_water_ml (amount=330 ml → water_ml=330 persisted)",
+      "TestPatchAmount::test_patch_amount_nonexistent_id_returns_404",
+      "TestDailyReport::test_report_structure_for_seed_day (all totals keys, warnings shape, meals shape, disclaimer tail, food_groups_hit)",
+      "TestClarificationRoundtrip::test_ambiguous_then_answer ('yemek yedim' → questions/draft → answered → persisted entry with valid meal_type)"
+    ],
+    "failed": [],
+    "skipped": []
+  },
+  "action_items": [],
+  "critical_code_review_comments": [
+    "TIMEZONE FIX at server.py L717-730 is correct: parses ISO input (converts 'Z' → '+00:00'), assumes TR when naive, then astimezone(TR_TZ). Forces parsed.time/date to CURRENT Istanbul local — LLM cannot override it. Verified end-to-end.",
+    "PATCH /entries/{id}/time (L470-481) validates HH:MM with proper regex and returns 400 on invalid.",
+    "PATCH /entries/{id}/amount (L484-523) handles water (ml override), activity (dk scale with duration_minutes + burn ratio), and food (porsiyon/g/adet baseline scaling of macros). Correctly 404s on missing entry.",
+    "GET /report/daily (L1093-1216) returns all documented fields with correct numeric types; disclaimer constant ends with expected sentence.",
+    "server.py is now 1244 lines — approaching the 700-line guideline threshold. Recommend splitting AI/chatbot + report modules into /app/backend/routes/ in a future refactor. Not a blocker.",
+    "Startup indexes exclude photo_base64 from GET queries — good; ObjectId `_id` correctly excluded everywhere."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_timezone_and_new_endpoints.py (new)"
+  ],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "N/A (not requested)"},
+  "seed_data_creation": "None — used pre-seeded session demo_session_grid_001 / user_demo_grid01 and the 10 pre-seeded entries on 2026-06-30. Post-run cleanup deletes chatbot-inserted entries for date 2026-07-01 (test dates), keeping seed day (2026-06-30) intact (10 entries verified after cleanup).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All P0 timezone + PATCH + /report/daily scenarios pass. Reusable test file: /app/backend/tests/test_timezone_and_new_endpoints.py. Base URL from /app/frontend/.env (EXPO_PUBLIC_BACKEND_URL). Auth: Bearer demo_session_grid_001. If the seed for 2026-06-30 is ever reset, TestDailyReport asserts at least one of {water, diversity} warnings — adjust if seed contents change materially.",
+  "rca_of_issue": "N/A — no failures. The prior UTC-leak bug is confirmed resolved by the fix at server.py L717-730 (astimezone(TR_TZ) after parsing user_local_time), and the assistant no longer stamps historical/future times from message content (parsed['time']/['date'] are unconditionally overwritten with local_now)."
+}

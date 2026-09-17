@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 11 — Frontend-only verification of logout/delete redirect fix on Profile tab. All 3 flows PASS: (1) BUG 1 logout via [data-testid=logout-btn] with test_session_macros_001 → redirects to /welcome, welcome-brand + welcome-signup-google visible, localStorage token cleared, no bounce back after 3s; (2) BUG 2 delete via [data-testid=delete-account-btn] with seeded del_ui_tok, window.confirm accepted via page.on('dialog') → redirects to /welcome, token cleared, no bounce back, backend GET /api/auth/me with del_ui_tok returns 401 (user deleted); (3) REGRESSION: re-injected test_session_macros_001 (had to re-seed the session in Mongo because BUG 1's logout call deleted it from user_sessions, expected behavior) → profile shows 'Macro Test', 'macros@test.com', BESLENCE AI Pro, sportif theme, full plan data. No react_native deprecated packages found; no red-screen errors. Minor non-blocking console warnings observed: 'shadow* style props deprecated' and 'props.pointerEvents deprecated' (React Native Web internal warnings, not blocking).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": ["/tmp/seed_del_user.py"],
+  "action_items": [
+    "The seeded 'test_session_macros_001' session gets DELETED from user_sessions by the backend logout endpoint. This is correct behavior, but any future automated test that logs out via UI must re-seed the session in Mongo before re-running regression flows. Consider documenting this in /app/memory/test_credentials.md (add a note: 'logout endpoint deletes the session record; re-seed before reuse'). Non-blocking.",
+    "Non-blocking Playwright caveat (for future iterations): page.click on the delete-account-btn hangs indefinitely on the web preview because window.confirm blocks Playwright's click-completion path even with a dialog handler. Workaround: fire the click as an unawaited asyncio task and rely on page.on('dialog') to accept — the redirect still completes correctly. This is a testing infrastructure quirk, not a product bug."
+  ],
+  "critical_code_review_comments": [
+    "profile.tsx logout onPress (line 160) and confirmDeleteAccount doDelete (lines 33-37) both correctly call context logout() (which clears in-memory user/profile/plan/isPro + session token) BEFORE router.replace('/welcome') — the previous 'delete only clears token, splash bounces back' bug is fully fixed.",
+    "auth-context.tsx logout() (lines 152-161) properly clears session token AND in-memory state (user, profile, plan, isPro). The splash gate in app/index.tsx (line 71) checks !user before routing to /welcome, so clearing user state prevents the bounce-back on remount."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only per request)", "frontend": "100% (3/3 flows passing)"},
+  "seed_data_creation": "Seeded disposable Mongo docs for BUG 2: users {user_id: del_ui_user, email: delui@test.com, profile.name: Del, profile.selected_theme: sakin, plan: {}, onboarding_completed: true} and user_sessions {session_token: del_ui_tok, user_id: del_ui_user, created_at/expires_at datetime, +7d}. Both were deleted by the delete-account flow as expected (verified 401 from /api/auth/me). Also re-seeded test_session_macros_001 in user_sessions after BUG 1 logout consumed it, for the REGRESSION step.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fix verified end-to-end on the web preview. Both logout and delete-account flows now: (1) call context logout() to clear both session + in-memory auth state, and (2) router.replace('/welcome'). The splash router (app/index.tsx) checks !user to decide /welcome vs /(tabs), so with in-memory state cleared, there is no bounce-back. Test tokens: 'test_session_macros_001' is CONSUMED (deleted from user_sessions) by any logout — re-seed it via the snippet in /app/memory/test_credentials.md before reusing.",
+  "rca_of_issue": "Original bug: 'delete only cleared stored token, in-memory user state remained; splash saw user!==null and bounced to /(tabs). Both flows also navigated to / instead of /welcome.' Fix (already applied in profile.tsx + auth-context.tsx): both onPress handlers now `await logout()` (which clears session AND setUser/setProfileState/setPlan/setIsPro to null/false) then `router.replace('/welcome')`. Verified in this iteration: after tapping logout or accepting the delete confirm, the app lands on /welcome, welcome-brand + welcome-signup-google are rendered, localStorage token is cleared, and no bounce-back occurs within a 3s observation window."
+}

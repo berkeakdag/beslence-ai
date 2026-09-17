@@ -1,0 +1,48 @@
+{
+  "summary": "BESLENCE AI backend regression VERIFIED — all 9 pytest tests pass on first run against https://ai-food-logger-2.preview.emergentagent.com (Bearer demo_session_grid_001 / user_demo_grid01). (1) HEALTH-QUESTION FILTER: All 3 messages ('insülin direncim var ne yapmalıyım?', 'kalp hastasıyım hangi diyet uygun', 'hangi vitamini almalıyım') with user_local_time=2026-07-01T15:00:00+03:00 return {ok:true, is_health_question:true, reply:<TR>}. Every reply contains 'diyetisyen' (checked case-insensitive). Mongo entries collection count is IDENTICAL before/after each health-question call (no persistence). (2) FOOD/DRINK REGRESSION: '1 bardak su ekle' returns ok:true, needs_clarification:false, entry.time=='15:00', entry.date=='2026-07-01'; count(entries) increases by exactly 1. (3) SUGAR WARNING WORDING + 25 g THRESHOLD: GET /api/report/daily?date=2026-06-30 warnings[] contains sugar warning (est. 54.9 g > 25 g). Text = 'Bugün yiyeceklerdeki doğal ve eklenen şeker toplamın 54.9 g'ı aştı. Genel rehberler günde 25 g altını önerir. Bu yalnızca bilgilendirmedir.' → contains BOTH required substrings 'Bugün yiyeceklerdeki doğal ve eklenen şeker toplamın' AND 'günde 25 g altını önerir'; no legacy '50 g' string. (4) BMH REGRESSION: POST /api/profile with male body (age 30, 180 cm, 80 kg, sex 'erkek', yag_yakmak, orta_aktif) → bmr_kcal==1780 AND maintenance_calories==2136 (= round(1780×1.20)). Same body with sex='kadın' → bmr_kcal==1614. Confirmed BASE_FACTOR is a constant 1.20 (server.py L276) regardless of daily_activity_level. (5) PATCH REGRESSION: PATCH /api/entries/{id}/time with '10:30' on the step-2 water entry → 200 {ok:true}. PATCH /api/entries/{id}/amount with {amount:500,unit:'ml'} → water_ml==500 confirmed via GET /api/entries?date=2026-07-01. Cleanup fixture removes all chatbot-created entries for user_demo_grid01 on 2026-07-01 (seed day 2026-06-30 untouched). Profile of demo user was overwritten as expected per request note (session token still valid — GET /api/profile succeeds).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_health_filter_and_bmh.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "test_results_detail": {
+    "passed": [
+      "TestHealthQuestionFilter::test_health_question_no_persistence[insülin direncim var ne yapmalıyım?]",
+      "TestHealthQuestionFilter::test_health_question_no_persistence[kalp hastasıyım hangi diyet uygun]",
+      "TestHealthQuestionFilter::test_health_question_no_persistence[hangi vitamini almalıyım]",
+      "TestFoodDrinkPersists::test_water_add_persists (entry.time=15:00, date=2026-07-01, +1 mongo record)",
+      "TestSugarWarning::test_report_daily_sugar_wording (54.9 g > 25 g, required substrings present, no legacy 50 g)",
+      "TestBMHRegression::test_male_bmr_and_maintenance (1780 kcal, 2136 kcal maintenance)",
+      "TestBMHRegression::test_female_bmr (1614 kcal)",
+      "TestPatchRegression::test_patch_time_valid (10:30 → 200)",
+      "TestPatchRegression::test_patch_amount_water_ml (500 ml → water_ml==500 in GET)"
+    ],
+    "failed": [],
+    "skipped": []
+  },
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Health-question short-circuit at server.py L695-701: correctly returns {ok:true, is_health_question:true, reply:...} BEFORE any entry insertion. Fallback reply also includes 'diyetisyen' + 'kayıt' — safe even if the LLM omits the reply field.",
+    "BASE_FACTOR = 1.20 at server.py L276 is now a single constant applied unconditionally in maintenance calc (activity level no longer changes calories at rest — only appears in the recommendation surface). Verified 1780 * 1.20 = 2136 (round).",
+    "Sugar warning template at server.py L1149-1154 uses '> 25' threshold with the exact wording required by the spec. added_sugar_g heuristic (~25% of carb midpoint) may over-estimate on very high-carb whole-food days; this is a product-side decision, not a bug.",
+    "server.py is 1258 lines — still above the 700-line guideline (previously flagged in iteration 7). Recommend splitting AI/chatbot + report modules in a future refactor. Not a blocker for this iteration."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_health_filter_and_bmh.py (new)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "N/A (not requested)"},
+  "seed_data_creation": "None. Used pre-seeded session demo_session_grid_001 / user_demo_grid01 and pre-seeded 2026-06-30 timeline. Test data cleanup: session-scoped autouse fixture deletes user_demo_grid01 entries on 2026-07-01 (seed day 2026-06-30 preserved). NOTE: BMH test destructively overwrote the demo user's profile (male → female → male-last-run) per request permission; session token still works.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All health-filter + sugar-25g + BMH×1.20 + PATCH regression cases green. Reusable test file: /app/backend/tests/test_health_filter_and_bmh.py. Base URL from /app/frontend/.env EXPO_PUBLIC_BACKEND_URL. Auth: Bearer demo_session_grid_001. If the demo seed for 2026-06-30 is ever adjusted so added_sugar_g estimate drops ≤25 g, TestSugarWarning will skip (that's spec-compliant). BMH test overwrites the demo user's profile — if a future test relies on the original demo profile, re-seed via /app/scripts (or the memory seed snippet).",
+  "rca_of_issue": "N/A — no failures."
+}

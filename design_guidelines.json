@@ -1,0 +1,155 @@
+{
+  "theme_and_archetype": {
+    "domain": "Health, Wellness, Nutrition, Activity Tracking",
+    "theme": "Light Theme (Default)",
+    "archetype": "1 (Organic & Earthy)"
+  },
+  "brand_identity": {
+    "name": "BESLENCE AI",
+    "tagline": "Yediklerini, aktivitelerini ve günlük akışını tek yerden takip et.",
+    "vibe": "Premium, modern, sade (clean), soft edges, smooth animations.",
+    "logo_concept": "'B' body with a single sprouting leaf on top.",
+    "signature_animation": "Leaf filling up from bottom to top like water, representing daily progress or loading state."
+  },
+  "color_palette": {
+    "primary": {
+      "name": "Beslence Yeşili",
+      "hex": "#1D9E75",
+      "tw_class": "bg-[#1D9E75] text-[#1D9E75] border-[#1D9E75]"
+    },
+    "secondary": {
+      "name": "Derin Yaprak",
+      "hex": "#0F6E56",
+      "tw_class": "bg-[#0F6E56] text-[#0F6E56] border-[#0F6E56]"
+    },
+    "dark": {
+      "name": "Gece Yeşili",
+      "hex": "#0B2620",
+      "tw_class": "bg-[#0B2620] text-[#0B2620] border-[#0B2620]"
+    },
+    "accent": {
+      "name": "Mint",
+      "hex": "#E0F5EE",
+      "tw_class": "bg-[#E0F5EE] text-[#E0F5EE] border-[#E0F5EE]"
+    },
+    "background": {
+      "name": "Paper",
+      "hex": "#F9FAF9",
+      "tw_class": "bg-[#F9FAF9] text-[#F9FAF9] border-[#F9FAF9]"
+    },
+    "semantic": {
+      "meal_bubble": "#1D9E75",
+      "water_bubble": "#3AB0FF",
+      "coffee_bubble": "#8D6E63",
+      "activity_bubble": "#FF7043",
+      "plan_bubble": "#E2E8F0",
+      "text_main": "#0B2620",
+      "text_muted": "#5B7A72"
+    }
+  },
+  "typography": {
+    "rules": "The Anti-Default Rule: Headers use Poppins (distinct, geometric but friendly), Body uses Inter (clean, legible). Tighten tracking on large Poppins headers.",
+    "font_families": {
+      "headings": "Poppins, sans-serif",
+      "body": "Inter, sans-serif"
+    },
+    "scales": {
+      "h1": "text-4xl tracking-tight font-bold text-[#0B2620]",
+      "h2": "text-2xl tracking-tight font-semibold text-[#0B2620]",
+      "h3": "text-xl font-medium text-[#0B2620]",
+      "body_lg": "text-base text-[#0B2620]",
+      "body_sm": "text-sm text-[#5B7A72]",
+      "label": "text-xs uppercase tracking-widest text-[#5B7A72] font-semibold"
+    }
+  },
+  "layout_and_spacing": {
+    "mobile_first_container": "Since this is a mobile app MVP (Expo style), wrap the main layout in a mobile container: `max-w-md mx-auto min-h-screen relative bg-[#F9FAF9] overflow-hidden shadow-2xl`.",
+    "spacing_system": "Generous spacing. Use `p-6` or `p-8` for screen padding. Gap between dashboard cards should be `gap-4` or `gap-6`.",
+    "grid_modes": "Use Bento grid (Control Room mode) for dashboard macros: Main Calorie Summary `col-span-full`, smaller macro blocks `col-span-1` (Grid cols 2 or 3)."
+  },
+  "app_themes_modes": {
+    "sakin_mod": {
+      "description": "Default. Calmer, focused on meals, water, and fiber.",
+      "visuals": "Soft shadows (`shadow-sm`), rounded edges (`rounded-3xl`), Paper background (`#F9FAF9`). Primary CTA uses Beslence Yeşili.",
+      "dashboard_priority": "Calories remaining, water intake progress, fiber, macros."
+    },
+    "sportif_mod": {
+      "description": "Energetic, training-focused.",
+      "visuals": "Higher contrast. Cards might use Gece Yeşili (`#0B2620`) with Mint text for a 'dark mode' widget feel. Slightly sharper edges (`rounded-2xl`).",
+      "dashboard_priority": "Calories burned, protein intake, activity timeline."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#1D9E75] text-white rounded-full py-4 px-6 font-poppins font-medium shadow-[0_8px_24px_rgba(29,158,117,0.3)] hover:-translate-y-1 transition-transform",
+      "secondary": "bg-[#E0F5EE] text-[#0F6E56] rounded-full py-4 px-6 font-poppins font-medium hover:bg-[#c9eee2] transition-colors",
+      "fab": "Floating Action Button for adding food/activity. Fixed bottom-right, size 16x16, Beslence Yeşili background, shadow-lg."
+    },
+    "cards": {
+      "base": "bg-white rounded-3xl p-5 shadow-[0_4px_20px_rgba(11,38,32,0.03)] border border-[#E0F5EE]/50",
+      "glass": "backdrop-blur-xl bg-white/70 border border-white/40 shadow-sm"
+    },
+    "daily_timeline": {
+      "container": "relative pl-8 py-4",
+      "line": "absolute left-4 top-0 bottom-0 w-0.5 bg-[#E0F5EE]",
+      "bubble_item": "relative mb-8 flex items-start gap-4",
+      "bubble_icon": "absolute -left-8 w-10 h-10 rounded-full flex items-center justify-center border-4 border-[#F9FAF9] z-10 text-white shadow-sm",
+      "bubble_content": "bg-white p-4 rounded-2xl shadow-sm border border-[#E0F5EE]/50 flex-1"
+    },
+    "calendar_strip": {
+      "description": "Horizontal scrollable week view at the top of the dashboard.",
+      "day_cell_active": "bg-[#0B2620] text-white rounded-full px-3 py-4 flex flex-col items-center gap-1",
+      "day_cell_inactive": "text-[#5B7A72] rounded-full px-3 py-4 flex flex-col items-center gap-1",
+      "indicators": "Small colored dots under the date (Green=Meal, Blue=Water logged)."
+    },
+    "bottom_navigation": {
+      "container": "absolute bottom-0 w-full bg-white/80 backdrop-blur-xl border-t border-gray-100 pb-safe pt-4 px-6 flex justify-between items-center rounded-t-3xl z-50",
+      "item_active": "text-[#1D9E75] flex flex-col items-center gap-1",
+      "item_inactive": "text-[#5B7A72]/50 flex flex-col items-center gap-1"
+    }
+  },
+  "animations": {
+    "signature_leaf_fill": "Use Framer Motion. SVG Leaf path. Animate `clipPath: inset(100% 0 0 0)` to `inset(0% 0 0 0)` over 1.5s with an ease-out curve. Background leaf is Mint, fill is Beslence Yeşili.",
+    "page_transitions": "Slide up and fade in (`initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}`).",
+    "timeline_bubbles": "Staggered fade-in from the left (`initial={{ opacity: 0, x: -10 }}`)."
+  },
+  "image_urls": {
+    "food_bowls": [
+      {
+        "url": "https://images.pexels.com/photos/4828100/pexels-photo-4828100.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Assorted fresh healthy poke bowls",
+        "category": "onboarding_background, food_placeholder"
+      },
+      {
+        "url": "https://images.pexels.com/photos/842545/pexels-photo-842545.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Fresh salad bowl",
+        "category": "food_placeholder"
+      }
+    ],
+    "activity": [
+      {
+        "url": "https://images.pexels.com/photos/11920624/pexels-photo-11920624.jpeg",
+        "description": "Person jogging at sunrise",
+        "category": "sportif_mod_hero, activity_placeholder"
+      }
+    ],
+    "hydration": [
+      {
+        "url": "https://images.pexels.com/photos/4725671/pexels-photo-4725671.jpeg",
+        "description": "Refreshing lemon mint water",
+        "category": "water_tracking_background"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "TECH STACK: Standard React web simulating a mobile app. Use a `max-w-md mx-auto min-h-screen relative overflow-x-hidden bg-[#F9FAF9]` container to wrap the entire app.",
+    "FONTS: Import 'Poppins' (weights 400,500,600,700) and 'Inter' (weights 400,500) from Google Fonts in index.html or layout. Extend tailwind.config.js to include these font families.",
+    "ROUTING: Build views for Splash/Onboarding, Dashboard, Add Entry (Food/Activity), and Chatbot. Use conditional rendering or React Router.",
+    "UI LIBRARY: Heavily customize Shadcn primitives. Remove default borders and make them rounded-3xl or rounded-2xl based on Sakin/Sportif themes.",
+    "ICONS: Use 'lucide-react'. Specifically, use icons like Leaf, Droplets, Coffee, Activity, Calendar, MessageCircle.",
+    "DATA-TESTID: ALL interactive elements (buttons, nav items, inputs, cards) MUST include a 'data-testid' attribute (e.g., 'data-testid=\"add-food-button\"').",
+    "THEMES: Implement a state toggle for 'Sakin Mod' vs 'Sportif Mod'. Change CSS classes dynamically based on this state (e.g., switch highlight colors or reorder dashboard widgets).",
+    "CHATBOT: The chatbot is 'record-only'. Provide an interface with a microphone icon that simulates voice recording (visual equalizer or pulsing circle) and appends to the daily timeline.",
+    "NO PLACEHOLDERS: Use the image URLs provided in this JSON. Never use dummyimage.com."
+  ]
+}

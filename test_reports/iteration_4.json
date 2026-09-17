@@ -1,0 +1,38 @@
+{
+  "summary": "Backend + frontend regression for BESLENCE AI onboarding/activity refactor. Backend (19/19 passing): POST /api/profile now always uses BMR×1.20 regardless of daily_activity_level/sports_frequency. Verified the spec example: erkek/30/180/75/yag_yakmak → BMR=1730, maintenance=2076, factor=1.2, goal_calories_min=1765 (2076*0.85), goal_calories_max=1868 (2076*0.90). Two identical profiles with cok_hareketsiz vs cok_aktif both produce maintenance=2076 (factor unchanged). GET /api/summary/daily aggregates estimated_activity_burn_min/max correctly (returns 200/300+ for the seeded activity day) and returns 0 burn for an unrelated date. Frontend (Expo web preview, 390×844): splash auto-routes to /welcome ~5s after load when not logged in. /welcome shows 'Hoş geldin' title, subtitle, description card, and both CTAs (welcome-start-button, welcome-existing-button) with correct testIDs. 'Başlayalım' navigates to /auth?next=onboarding with Google sign-in visible. Legacy onboarding paths redirect correctly: /onboarding/activity→/theme, /onboarding/sport→/theme, /onboarding/info→/name, /onboarding/measurements→/waist. All 10 new onboarding screens (goal→name→age→sex→height→weight→target-weight→waist→theme→privacy) render the correct 'N/10' progress counter and contain NO activity-related questions.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "OnboardingScaffold step badge", "issue": "On /onboarding/privacy the '10/10' label wraps to '10/1' + '0' on two lines because the badge container is too narrow for two-digit/two-digit numerator+denominator. Reference: /app/frontend/app/onboarding/privacy.tsx (step counter component, likely in scaffold).", "testID": "n/a", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/welcome", "issues": ["Large vertical gap between description card and CTAs at 390×844 — visually empty middle. Consider tightening or adding an illustration."]}
+    ],
+    "react_native_issues": [
+      {"component": "AnimatedBLogo / theme", "issue": "Console deprecation warnings: 'shadow* style props are deprecated, use boxShadow' and 'props.pointerEvents is deprecated, use style.pointerEvents'. Reference: /app/frontend/src/components/AnimatedBLogo.tsx and PrimaryButton/theme shadow styles."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_beslence_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/welcome_screen.png",
+    "/app/test_reports/auth_screen.png"
+  ],
+  "action_items": [
+    "(Low) Fix the step badge so '10/10' renders on one line on /onboarding/privacy (width/letter-spacing in OnboardingScaffold).",
+    "(Low) Replace pointerEvents prop with style.pointerEvents in AnimatedBLogo to silence the RN deprecation warning.",
+    "(Low) Migrate shadow* style props to boxShadow in PrimaryButton/theme to silence RN web deprecation warning."
+  ],
+  "critical_code_review_comments": [
+    "Backend calc_plan now correctly ignores ACTIVITY_FACTOR dictionary (kept only for backward compatibility); BASE_FACTOR=1.20 is hard-coded. Profile model still accepts daily_activity_level/sports_frequency but they are no longer used — acceptable for backward compatibility with stored documents.",
+    "Legacy onboarding routes (activity.tsx, sport.tsx, info.tsx, measurements.tsx) are pure <Redirect> components — clean implementation that preserves deep-link safety."
+  ],
+  "updated_files": ["/app/backend/tests/test_beslence_backend.py"],
+  "success_rate": {"backend": "100% (19/19)", "frontend": "100% (all flows verified)"},
+  "seed_data_creation": "Reseeded user_test01 + test_session_token_001 in MongoDB; cleared TEST_-prefixed entries before run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend test file /app/backend/tests/test_beslence_backend.py covers Health/Auth/Profile/Entries/Summary (incl. activity_burn isolation per date). Skip AI classes (TestChatbot/TestPhoto/TestFoodLookup) unless explicitly testing LLM. Token: 'test_session_token_001' (user_id user_test01). Onboarding scaffold uses step/10 counter; legacy /onboarding/{activity,sport,info,measurements} are Redirect-only.",
+  "rca_of_issue": "N/A - regression run only. No bugs blocking the new flow."
+}

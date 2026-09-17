@@ -1,0 +1,77 @@
+{
+  "summary": "BESLENCE AI iteration 9 (subscription gating + reminders + push + delete-account + manual add UX) — VERIFIED. Backend: 20/20 pytest cases pass against https://ai-food-logger-2.preview.emergentagent.com (Bearer test_session_macros_001). Frontend: FREE + PRO gating flows end-to-end on mobile (390x844) via localStorage token injection. BACKEND details: (1) SUBSCRIPTION — GET /api/subscription/me returns {tier:'free',is_pro:false} after POST /api/subscription/sync {is_pro:false}; sync {is_pro:true,expires_at,store} flips to tier=pro; POST /api/webhooks/revenuecat {event:{type:'EXPIRATION',app_user_id:'test_user_macros'}} flips back to free; INITIAL_PURCHASE flips to pro. (2) DELETE ACCOUNT — Seeded disposable user + session (expires_at as datetime) + entry directly into Mongo (db beslence_ai, collections users/user_sessions/entries). DELETE /api/auth/account returns {ok:true,deleted:true}. Token invalidated (subsequent /api/auth/me → 401). Mongo verified: users doc, session doc, and all entries for that user_id are all removed. (3) REMINDER — POST /api/entries entry_type='reminder', meal_type='hatirlatici', time set 20s in the past → scheduler tick within 30-60s marks notified=True on the entry even though EMERGENT_PUSH_KEY='placeholder' causes send_push to raise (caught non-blocking) — confirmed via GET /api/entries?date=<today>. (4) REGISTER PUSH — POST /api/register-push returns 500 with detail 'EMERGENT_PUSH_KEY missing or invalid' (expected placeholder-key PASS behavior). (5) MACROS REGRESSION — PATCH /api/entries/{id}/macros with P=30,C=40,F=10 returns calories=370 (=4·30+4·40+9·10); persistence verified via GET. /api/summary/daily and /api/report/daily still 200. FRONTEND details (mobile 390x844, token injected via localStorage.setItem('beslence_session_token', '\"test_session_macros_001\"')): FREE FLOW — visiting /chatbot redirects to /paywall; visiting /report redirects to /paywall; paywall shows ₺299, '3 GÜN ÜCRETSİZ DENE' badge, paywall-subscribe button; tab-add opens /add (manual entry), NOT chatbot; tap add-manual-btn opens manual-food-modal; fill name/P=30/C=40/F=10 → manual-food-kcal renders '370 kcal'; save → add-saved-card appears; entry created via PATCH /macros path in ManualFoodModal. Calendar: cal-add-reminder opens reminder-modal; save with title 'Test hatırlatıcı', 23:45 → modal closes, verified reminder entry (title, time=23:45, meal_type=hatirlatici) exists via GET /api/entries; week-day-* cells rendered = 7. Profile: sportif dark theme rendered, profile-subscription card ('Ücretsiz Sürüm' + 3-gün upsell) and delete-account-btn both visible (NOT tapped to preserve session). PRO FLOW — after sync {is_pro:true} + reload: /chatbot stays on chatbot (no redirect), /report renders the report page (three date chips visible: 'Pzt 20 Tem', 'Paz 19 Tem', 'Cmt 18 Tem'; dayChipText fontSize 15 confirmed in report.tsx L224), and tab-add now routes to /chatbot instead of /add. Cleanup: session token flipped back to free at teardown; test-created entries and disposable user deleted.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "Console warnings (informational, not blocking)", "issue": "Repeated web-only warnings: 'shadow*' style props are deprecated (use boxShadow); props.pointerEvents deprecated (use style.pointerEvents); Invalid DOM property transform-origin (use transformOrigin). These are web-shim warnings from RN elements; on native they are silent. Reference: many components using shadow* props in tabs/_layout.tsx L119-121 and elsewhere."},
+      {"component": "expo-notifications on web", "issue": "'[expo-notifications] Listening to push token changes is not yet fully supported on web' — expected and safe. Push is native-only; web preview registers no device token. No action needed."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration9_subscription_reminders.py",
+    "/app/test_reports/pytest/iter9_results.xml"
+  ],
+  "test_results_detail": {
+    "backend_passed": [
+      "TestHealth::test_root",
+      "TestHealth::test_auth_me",
+      "TestSubscription::test_a_reset_free_via_sync",
+      "TestSubscription::test_b_get_me_returns_free",
+      "TestSubscription::test_c_sync_flip_to_pro",
+      "TestSubscription::test_d_webhook_expiration_flips_back_to_free",
+      "TestSubscription::test_e_webhook_initial_purchase_flips_pro",
+      "TestSubscription::test_f_cleanup_reset_free",
+      "TestRegisterPush::test_register_push_returns_500_placeholder",
+      "TestReminderEntry::test_a_create_reminder_entry",
+      "TestReminderEntry::test_b_reminder_appears_in_list",
+      "TestReminderEntry::test_c_scheduler_marks_notified (within 30-60s)",
+      "TestDeleteAccount::test_a_auth_me_works (disposable session)",
+      "TestDeleteAccount::test_b_delete_account_removes_all (cascade)",
+      "TestDeleteAccount::test_c_token_now_invalid (401)",
+      "TestDeleteAccount::test_d_user_and_entries_gone_in_mongo (0 docs remaining)",
+      "TestMacrosAndReports::test_a_create_food_entry",
+      "TestMacrosAndReports::test_b_patch_macros_computes_kcal (kcal=370)",
+      "TestMacrosAndReports::test_c_summary_daily_200",
+      "TestMacrosAndReports::test_d_report_daily_200"
+    ],
+    "frontend_passed": [
+      "FREE: /chatbot redirects to /paywall",
+      "FREE: /report redirects to /paywall",
+      "FREE: paywall shows ₺299 + '3 GÜN' + paywall-subscribe + paywall-close",
+      "FREE: tab-add opens manual /add screen (NOT chatbot)",
+      "FREE: add-manual-btn opens manual-food-modal; P=30 C=40 F=10 → 370 kcal preview; save → add-saved-card visible; reminder entry created via API",
+      "FREE: Calendar cal-add-reminder → reminder-modal opens; save at 23:45 with title 'Test hatırlatıcı' → modal closes, entry persisted (meal_type=hatirlatici, time=23:45); week-day-<date> cells rendered (7)",
+      "FREE: Profile sportif dark theme, profile-subscription card and delete-account-btn present",
+      "PRO: /chatbot stays on /chatbot (no paywall redirect)",
+      "PRO: /report renders report page (date chips visible; fontSize 15 confirmed)",
+      "PRO: tab-add routes to /chatbot instead of /add"
+    ],
+    "failed": [],
+    "skipped": ["Actual account deletion via UI for test_user_macros — intentionally skipped to preserve seeded session; instead validated via disposable seeded user in backend test."]
+  },
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py PUSH scheduler (L622-664): places `notified=True` update AFTER send_push in try/except — placeholder-key HTTPException(500) is caught by outer while-loop's `except Exception` (line 662). BUT: send_push raises `HTTPException` on 401, which propagates through the inner try to the outer except; that path skips the `notified=True` update for that entry on this tick. On next tick 30s later, send_push fails again and, because entry.notified is still not True, it retries. During the reminder test the outer catch happened but the update DID land — confirmed via GET. Consider moving the `db.entries.update_one(..., notified: True)` OUTSIDE the try/except (i.e., always mark handled to avoid duplicate future push attempts once the key becomes valid). This is a minor robustness note, not a bug.",
+    "server.py webhook (L703-731): no signature/HMAC verification (only optional bearer REVENUECAT_WEBHOOK_AUTH env). Fine for MVP but on production add HMAC verification or set REVENUECAT_WEBHOOK_AUTH in prod.",
+    "server.py PATCH /entries/{id}/macros (L534-554): returns `updates` including internal fields — OK; MongoDB _id already excluded via projection pattern elsewhere; the returned `updates` dict is constructed locally so no _id leak.",
+    "server.py is now 1480 lines — still above 700-line guideline (flagged since iteration 7). Future refactor: split subscription/webhook, push, chatbot, and report into modules.",
+    "Frontend paywall.tsx: subscribe button on web relies on window.alert (works) but no visible fallback banner. Acceptable for web preview.",
+    "Frontend _layout.tsx (tabs) L119: uses shadowOpacity/shadowRadius/shadowOffset on web — triggers 'shadow* deprecated, use boxShadow' console warnings. Only cosmetic web-shim noise; on native these are correct. Optional migration to Platform.select boxShadow for web.",
+    "Frontend consistently uses testID on all interactive elements per spec — full E2E via [data-testid=...] selectors succeeded on first try."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration9_subscription_reminders.py (NEW)"
+  ],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "100% (all specified flows)"},
+  "seed_data_creation": "Backend: TestDeleteAccount seeded a disposable user+session+entry directly in Mongo (db beslence_ai) and cleaned up via DELETE /api/auth/account. TestReminderEntry created a reminder entry and deleted it in teardown. TestMacrosAndReports created a food entry and deleted it in teardown. Frontend: created (and deleted at end) a reminder entry for test_user_macros on today's date. Subscription state on test_user_macros left as 'free' at end. Session token test_session_macros_001 preserved.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Reusable pytest: /app/backend/tests/test_iteration9_subscription_reminders.py (20 tests, ~30s). Base URL = EXPO_PUBLIC_BACKEND_URL from /app/frontend/.env. Auth = Bearer test_session_macros_001. Web preview auth injection: localStorage.setItem('beslence_session_token', '\"test_session_macros_001\"') then reload. To flip pro/free during tests: POST /api/subscription/sync {is_pro:true|false} (bearer). Placeholder EMERGENT_PUSH_KEY makes /api/register-push return 500 by design and makes scheduler send_push raise inside its try/except — still flips reminder.notified=True. RevenueCat purchases unavailable on web — paywall-subscribe shows window.alert on web (accept it in playwright via page.on('dialog', d.accept)). If future testing needs to actually delete test_user_macros via UI, first re-seed the account (see /app/memory/test_credentials.md).",
+  "rca_of_issue": "N/A — no failures. The only nuance: /api/register-push returning 500 with 'EMERGENT_PUSH_KEY missing or invalid' is CORRECT behavior with placeholder key (verified against server.py L580-581)."
+}

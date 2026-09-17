@@ -1,0 +1,63 @@
+{
+  "summary": "SDK 57 upgrade regression PASSED. App boots cleanly on web preview (no redbox, no bundle errors). Backend sanity: /api/auth/me (Macro Test, sportif theme, plan), /api/entries?date=2026-07-20 (2 entries), /api/report/daily?date=2026-07-20 (totals.sugar_g=25.0 present), /api/subscription/me — all 200 with Bearer test_session_macros_001. Frontend (390x844, session-token injection via localStorage): FREE FLOW ✅ /chatbot and /report both redirect to /paywall; paywall renders BESLENCE AI Pro title, 4 feature cards, '3 GÜN ÜCRETSİZ DENE' badge, ₺299 / ay, [data-testid=paywall-subscribe] tappable → shows expected info alert 'Satın alma yalnızca App Store / Google Play üzerinden…' on web (RevenueCat native-only). 'Ekle' tab (tab-add) opens /add screen (not chatbot). add-manual-btn opens manual-food-modal with fields YEMEK ADI / PROTEIN / KARB / YAĞ / SAAT / DAKIKA, live KALORI (OTOMATIK) counter (manual-food-kcal) visible. Calendar tab: monthly grid (Eylül 2026), weekly cells rendered (7x week-day-* cells with vertical progress bars), cal-add-reminder opens reminder-modal with BAŞLIK / NOT EKLE / TARIH (YYYY-AA-GG) / SAAT / DAKIKA fields. Profile: sportif dark theme, profile-subscription card ('Ücretsiz Sürüm — 3 gün ücretsiz'), delete-account-btn present (NOT confirmed), profile-terms + profile-privacy links present. Day page /day/2026-07-20: timeline grid renders hour labels 00:00→24:00 in white, KALORI 938 kcal / KAYIT 2 header, 2 entry cards (grid-card-entry_d72e5e370fcc 'Tavuk pilav 568 kcal' 18:50 + grid-card-entry_ef308c7e3189 'TEST manual iter9 370 kcal' 20:03), grid-zoom-in/out visible. Tapping entry card opens grid-detail-modal with grid-detail-macros (Makro) + grid-detail-amount (Miktar) buttons; Makro opens grid-macro-editor pre-populated (Tavuk pilav P=55 C=60 F=12 → 568 kcal, computed = 4·55+4·60+9·12 = 568 ✓). PRO FLOW ✅ after POST /api/subscription/sync {is_pro:true}: /chatbot stays on /chatbot and renders chat UI ('Asistanım — Sadece kayıt — tavsiye yok. Merhaba! Ben Asistanın…' with 'Manuel Gir' shortcut); /report renders 4 macro rings (Kalori/Protein/Karbonhidrat/Yağ each with %, g), plus SU 0.0 L, AKTIVITE 0 dk, ŞEKER 0 g (sugar_g surfaced), LIF 0 g, 7 enlarged date chips (Cum 4 Eyl … Cmt 29 Ağu) and DISCLAIMER footer — NO 'Uyarılar' section (confirmed absent from body). SDK 57 stack verified: react-native 0.86.3, react 19.2.3, expo 57.0.x, expo-router 57.0.19, reanimated 4.5.1, gesture-handler 2.32, expo-notifications 57.0.17 all boot successfully. Console warnings unchanged from iter9 (web-shim only: shadow*, pointerEvents, transformOrigin, expo-notifications web push-token listener). No new deprecation issues introduced by upgrade. Cleanup: subscription tier reset to 'free' at teardown; session token test_session_macros_001 preserved.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "web-only style shims (shadow*, pointerEvents, transformOrigin)", "issue": "Pre-existing web-shim console warnings from iter9 persist under SDK 57 (react-native-web 0.21.2). Cosmetic only, not blocking on native. Reference: /app/frontend/app/(tabs)/_layout.tsx L119-121."},
+      {"component": "expo-notifications on web", "issue": "'Listening to push token changes is not yet fully supported on web' — expected/harmless. Push is native-only."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration9_subscription_reminders.py",
+    "/app/test_reports/pytest/iter9_results.xml"
+  ],
+  "test_results_detail": {
+    "backend_passed": [
+      "GET /api/auth/me → 200 (Macro Test, sportif theme, plan intact)",
+      "GET /api/entries?date=2026-07-20 → 200 (2 seeded entries returned)",
+      "GET /api/report/daily?date=2026-07-20 → 200 (totals.sugar_g=25.0, calories=938, entry_count=2)",
+      "GET /api/subscription/me → 200 (tier togglable free↔pro via POST /api/subscription/sync)"
+    ],
+    "frontend_passed": [
+      "SDK 57 boot: web bundle loads with no redbox, splash → route hydration OK",
+      "FREE: /chatbot redirects to /paywall",
+      "FREE: /report redirects to /paywall",
+      "FREE: paywall ₺299 + 3 GÜN badge + subscribe alert works (App Store/Play notice)",
+      "FREE: tab-add opens /add manual entry screen",
+      "FREE: add-manual-btn → manual-food-modal with live KALORI counter",
+      "FREE: Calendar month grid + 7 weekly cells + cal-add-reminder → reminder-modal (title/note/date/time)",
+      "FREE: Profile sportif dark theme, subscription card, delete-account-btn, terms & privacy links",
+      "FREE: Day /day/2026-07-20 timeline (white hour labels), 2 entry cards tappable, grid-detail-modal → Makro/Miktar",
+      "FREE: grid-macro-editor pre-populated with existing values (568 kcal for Tavuk pilav P55/C60/F12)",
+      "PRO: /chatbot renders chat UI (no paywall redirect)",
+      "PRO: /report renders 4 macro rings + ŞEKER + 7 date chips + NO Uyarılar section",
+      "Zoom controls (grid-zoom-in / grid-zoom-out) present on day timeline"
+    ],
+    "failed": [],
+    "skipped": [
+      "Pinch-to-zoom on timeline (native-only; web preview cannot simulate multi-touch)",
+      "Real push token registration (EMERGENT_PUSH_KEY=placeholder; validated in iter9 as expected fail-graceful)",
+      "Full iteration_9 pytest suite (per instruction; only sanity curls run this iteration)",
+      "Delete account confirmation (skipped intentionally to preserve seeded session)"
+    ]
+  },
+  "action_items": [],
+  "critical_code_review_comments": [
+    "SDK 57 upgrade delta appears cleanly applied — testID coverage retained, no breaking API changes surfaced in bundle/runtime.",
+    "Console warnings from iter9 still present on web (shadow*, pointerEvents, transformOrigin, expo-notifications web listener). Optional low-priority polish: migrate shadow* → Platform.select boxShadow for web in /app/frontend/app/(tabs)/_layout.tsx.",
+    "server.py file size (~1480 lines) still above 700-line guideline (flagged since iter7). No functional impact on this regression."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (4/4 sanity endpoints)", "frontend": "100% (all 9 upgrade regression flows)"},
+  "seed_data_creation": "None. Reused existing test_user_macros with 2 seeded entries on 2026-07-20. Subscription tier toggled pro↔free during test and reset to 'free' at teardown.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "SDK 57 regression complete. Next testers can trust the existing iter9 pytest at /app/backend/tests/test_iteration9_subscription_reminders.py for backend regression (Bearer test_session_macros_001). Web preview auth injection: localStorage.setItem('beslence_session_token', '\"test_session_macros_001\"'). Note the actual entry-card testID pattern is 'grid-card-{entry.id}' (not 'grid-entry-'), and macro/amount buttons inside grid-detail-modal are 'grid-detail-macros' and 'grid-detail-amount' (see /app/frontend/src/components/TimelineGrid.tsx L497, L635, L641). For paywall subscribe on web, register page.on('dialog', d.accept) BEFORE clicking paywall-subscribe (blocking JS alert). If session expires again, re-seed user_sessions in Mongo db 'beslence_ai' with datetime expires_at.",
+  "rca_of_issue": "N/A — SDK 54→57 upgrade regression passed cleanly; all pre-existing warnings unchanged, no new redbox/bundle failures."
+}
